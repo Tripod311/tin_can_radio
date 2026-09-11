@@ -62,6 +62,8 @@ func main() {
 	)
 	defer signal.Stop(signals)
 
+	fmt.Printf("Server listening on port %d\n", config.Port)
+
 	select {
 	case receivedSignal := <-signals:
 		fmt.Printf("Received signal %s\n", receivedSignal)

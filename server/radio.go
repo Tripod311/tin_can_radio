@@ -105,6 +105,8 @@ func (radio *Radio) Start() {
 	}
 
 	radio.started = true
+
+	fmt.Println("Radio started")
 }
 
 func (radio *Radio) Stop() {
@@ -137,6 +139,8 @@ func (radio *Radio) Stop() {
 	for _, peerConnection := range listeners {
 		_ = peerConnection.Close()
 	}
+
+	fmt.Println("Radio stopped")
 }
 
 func (radio *Radio) ReceiveListenOffer(
@@ -220,6 +224,8 @@ func (radio *Radio) ReceiveListenOffer(
 		return closeOnError(errors.New("local description is missing"))
 	}
 
+	fmt.Println("Listener created")
+
 	return localDescription, nil
 }
 
@@ -229,6 +235,8 @@ func (radio *Radio) removeListener(
 	radio.mutex.Lock()
 	delete(radio.listeners, peerConnection)
 	radio.mutex.Unlock()
+
+	fmt.Println("Listener removed")
 }
 
 func (radio *Radio) ReceiveBroadcastOffer(
@@ -359,6 +367,8 @@ func (radio *Radio) ReceiveBroadcastOffer(
 		return closeOnError(errors.New("local description is missing"))
 	}
 
+	fmt.Println("Broadcast started")
+
 	return localDescription, nil
 }
 
@@ -371,6 +381,8 @@ func (radio *Radio) removeBroadcaster(
 	if radio.broadcaster == peerConnection {
 		radio.broadcaster = nil
 		radio.meta = nil
+
+		fmt.Println("Broadcast stopped")
 	}
 }
 

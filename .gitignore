@@ -1,2 +1,5 @@
 client/node_modules
 .vscode
+client_dist
+logo.*
+tin_can_radio

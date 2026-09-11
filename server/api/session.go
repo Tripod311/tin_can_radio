@@ -116,6 +116,7 @@ func (session *Session) listen() {
 				command.Response <- SessionResponse{
 					Token: token,
 				}
+				fmt.Println("Studio occupied")
 			case "release":
 				if !occupied {
 					command.Response <- SessionResponse{
@@ -133,6 +134,7 @@ func (session *Session) listen() {
 
 				clear()
 				command.Response <- SessionResponse{}
+				fmt.Println("Studio released")
 			case "refresh":
 				if !occupied {
 					command.Response <- SessionResponse{
