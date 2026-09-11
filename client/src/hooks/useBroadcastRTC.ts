@@ -43,9 +43,9 @@ function waitForIceGatheringComplete (
 }
 
 export default function useBroadcastRTC (
-	audioTrack: MediaStreamTrack | null,
 	iceServers: RTCIceServer[] = DEFAULT_ICE_SERVERS
 ) {
+	const senderRef = useRef<RTCRtpSender | null>(null);
 	const peerConnectionRef = useRef<RTCPeerConnection>(null)
 
 	const [ status, setStatus ] =
@@ -55,15 +55,17 @@ export default function useBroadcastRTC (
 		useState<Error | null>(null)
 
 	const stop = useCallback(() => {
-		const peerConnection = peerConnectionRef.current
+		const peerConnection = peerConnectionRef.current;
 
-		peerConnectionRef.current = null
-		peerConnection?.close()
+		peerConnectionRef.current = null;
+		senderRef.current = null;
 
-		setStatus("idle")
-	}, [])
+		peerConnection?.close();
 
-	const start = useCallback(async () => {
+		setStatus("idle");
+	}, []);
+
+	const start = useCallback(async (audioTrack: MediaStreamTrack) => {
 		if (peerConnectionRef.current) {
 			return
 		}
@@ -85,10 +87,12 @@ export default function useBroadcastRTC (
 
 		const stream = new MediaStream([ audioTrack ])
 
-		peerConnection.addTransceiver(audioTrack, {
+		const transceiver = peerConnection.addTransceiver(audioTrack, {
 			direction: "sendonly",
 			streams: [ stream ]
 		})
+
+		senderRef.current = transceiver.sender;
 
 		peerConnection.addEventListener(
 			"connectionstatechange",
@@ -157,8 +161,6 @@ export default function useBroadcastRTC (
 
 			await peerConnection.setRemoteDescription(answer)
 		} catch (value: unknown) {
-			// Если stop() уже закрыл это подключение,
-			// результат старого async-сценария больше не нужен.
 			if (peerConnectionRef.current !== peerConnection) {
 				return
 			}
@@ -174,11 +176,24 @@ export default function useBroadcastRTC (
 
 			setStatus("error")
 		}
-	}, [ audioTrack, iceServers ])
+	}, [ iceServers ])
 
 	useEffect(() => {
 		return stop
 	}, [ stop ])
+
+	const replaceTrack = useCallback(
+		async (track: MediaStreamTrack) => {
+			const sender = senderRef.current;
+
+			if (!sender) {
+				throw new Error("Broadcast is not started");
+			}
+
+			await sender.replaceTrack(track);
+		},
+		[]
+	);
 
 	return {
 		status,
@@ -191,6 +206,7 @@ export default function useBroadcastRTC (
 			status === "reconnecting",
 
 		start,
-		stop
+		stop,
+		replaceTrack
 	}
 }

@@ -19,8 +19,6 @@ type StatusResponse struct {
 
 type Radio interface {
 	GetStatus() (bool, int)
-	GetMeta() json.RawMessage
-	SetMeta(json.RawMessage)
 	ReceiveListenOffer(offer webrtc.SessionDescription) (*webrtc.SessionDescription, error)
 	ReceiveBroadcastOffer(offer webrtc.SessionDescription) (*webrtc.SessionDescription, error)
 }
@@ -275,7 +273,7 @@ func (api *API) HandleBroadcast(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	answer, err := api.Radio.ReceiveListenOffer(offer)
+	answer, err := api.Radio.ReceiveBroadcastOffer(offer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

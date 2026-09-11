@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 
 import useLeaseRefresh from "./queries/use-lease-refresh.js"
@@ -24,8 +24,9 @@ export default function BroadcastPage ({
 		broadcasting,
 		connecting,
 		start,
-		stop
-	 } = useBroadcastRTC(track);
+		stop,
+		replaceTrack
+	 } = useBroadcastRTC();
 
 	const refreshQ = useLeaseRefresh();
 	const leaveStudioMutation = useMutation({
@@ -42,6 +43,24 @@ export default function BroadcastPage ({
 		}
 	})
 
+	useEffect(() => {
+		return () => {
+			stop()
+		}
+	}, []);
+
+	useEffect(() => {
+		if (track !== null) {
+			if (broadcasting) {
+				replaceTrack(track);
+			} else {
+				start(track);
+			}
+		} else {
+			stop();
+		}
+	}, [track]);
+
 	async function toggleBroadcast () {
 		switch (status) {
 			case "broadcasting":
@@ -54,10 +73,10 @@ export default function BroadcastPage ({
 					audio: true
 				})
 
-				setMicTrack(stream.getAudioTracks()[0] ?? null)
-				setTrack(stream.getAudioTracks()[0] ?? null);
+				const micTrack = stream.getAudioTracks()[0] ?? null;
 
-				start();
+				setMicTrack(micTrack);
+				setTrack(micTrack);
 				break;
 		}
 	}

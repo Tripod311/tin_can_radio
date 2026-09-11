@@ -52,7 +52,7 @@ export default function RadioButton ({ live, toggleLive }: ButtonProps) {
 			{
 				live
 				? "You are listening live"
-				: "Readu to tune in"
+				: "Ready to tune in"
 			}
 		</p>
 	</div>

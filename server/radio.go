@@ -33,7 +33,21 @@ type Radio struct {
 func NewRadio(servers []ICEServer) (*Radio, error) {
 	mediaEngine := &webrtc.MediaEngine{}
 
-	if err := mediaEngine.RegisterDefaultCodecs(); err != nil {
+	opusCodec := webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:     webrtc.MimeTypeOpus,
+			ClockRate:    48000,
+			Channels:     2,
+			SDPFmtpLine:  "minptime=10;useinbandfec=1",
+			RTCPFeedback: nil,
+		},
+		PayloadType: 111,
+	}
+
+	if err := mediaEngine.RegisterCodec(
+		opusCodec,
+		webrtc.RTPCodecTypeAudio,
+	); err != nil {
 		return nil, err
 	}
 
@@ -62,9 +76,7 @@ func NewRadio(servers []ICEServer) (*Radio, error) {
 	}
 
 	audioTrack, err := webrtc.NewTrackLocalStaticRTP(
-		webrtc.RTPCodecCapability{
-			MimeType: webrtc.MimeTypeOpus,
-		},
+		opusCodec.RTPCodecCapability,
 		"audio",
 		"tin-can",
 	)
@@ -130,23 +142,27 @@ func (radio *Radio) Stop() {
 func (radio *Radio) ReceiveListenOffer(
 	offer webrtc.SessionDescription,
 ) (*webrtc.SessionDescription, error) {
+	peerConnection, err := radio.api.NewPeerConnection(radio.config)
+	if err != nil {
+		return nil, fmt.Errorf("create peer connection: %w", err)
+	}
+
 	radio.mutex.Lock()
 
 	if !radio.started {
 		radio.mutex.Unlock()
-		return nil, errors.New("radio is not started")
-	}
+		_ = peerConnection.Close()
 
-	peerConnection, err := radio.api.NewPeerConnection(radio.config)
-	if err != nil {
-		return nil, fmt.Errorf("create peer connection: %w", err)
+		return nil, errors.New("radio is not started")
 	}
 
 	radio.listeners[peerConnection] = struct{}{}
 	radio.mutex.Unlock()
 
 	closeOnError := func(err error) (*webrtc.SessionDescription, error) {
+		radio.removeListener(peerConnection)
 		_ = peerConnection.Close()
+
 		return nil, err
 	}
 
@@ -218,20 +234,19 @@ func (radio *Radio) removeListener(
 func (radio *Radio) ReceiveBroadcastOffer(
 	offer webrtc.SessionDescription,
 ) (*webrtc.SessionDescription, error) {
-	radio.mutex.RLock()
-	started := radio.started
-	radio.mutex.RUnlock()
-
-	if !started {
-		return nil, errors.New("radio is not started")
-	}
-
 	peerConnection, err := radio.api.NewPeerConnection(radio.config)
 	if err != nil {
 		return nil, fmt.Errorf("create peer connection: %w", err)
 	}
 
 	radio.mutex.Lock()
+
+	if !radio.started {
+		radio.mutex.Unlock()
+		_ = peerConnection.Close()
+
+		return nil, errors.New("radio is not started")
+	}
 
 	if radio.broadcaster != nil {
 		radio.mutex.Unlock()
@@ -271,15 +286,48 @@ func (radio *Radio) ReceiveBroadcastOffer(
 			return
 		}
 
+		codec := remoteTrack.Codec()
+
+		fmt.Printf(
+			"broadcast track received: mime=%s, pt=%d, clock=%d, channels=%d\n",
+			codec.MimeType,
+			codec.PayloadType,
+			codec.ClockRate,
+			codec.Channels,
+		)
+
+		if codec.MimeType != webrtc.MimeTypeOpus {
+			fmt.Printf("unsupported broadcast codec: %s\n", codec.MimeType)
+			_ = peerConnection.Close()
+			return
+		}
+
 		go func() {
+			firstPacket := true
+
 			for {
 				packet, _, err := remoteTrack.ReadRTP()
 				if err != nil {
+					fmt.Printf("broadcast RTP read stopped: %v\n", err)
 					return
 				}
 
+				if firstPacket {
+					fmt.Printf(
+						"first broadcast RTP packet: pt=%d, seq=%d, timestamp=%d\n",
+						packet.PayloadType,
+						packet.SequenceNumber,
+						packet.Timestamp,
+					)
+
+					firstPacket = false
+				}
+
+				packet.Extension = false
+				packet.Extensions = nil
+
 				if err := radio.audioTrack.WriteRTP(packet); err != nil {
-					return
+					fmt.Printf("broadcast RTP write error: %v\n", err)
 				}
 			}
 		}()
@@ -327,13 +375,8 @@ func (radio *Radio) removeBroadcaster(
 }
 
 func (radio *Radio) GetStatus() (bool, int) {
+	radio.mutex.RLock()
+	defer radio.mutex.RUnlock()
+
 	return radio.broadcaster != nil, len(radio.listeners)
-}
-
-func (radio *Radio) GetMeta() json.RawMessage {
-	return radio.meta
-}
-
-func (radio *Radio) SetMeta(meta json.RawMessage) {
-	radio.meta = meta
 }

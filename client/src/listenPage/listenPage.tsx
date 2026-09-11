@@ -75,6 +75,7 @@ export default function ListenPage ({ onEnter }: ListenPageProps) {
 	}, [ status, queryClient ]);
 
 	return <div className="relative flex min-h-screen flex-col overflow-hidden">
+		<audio ref={audioRef} className="hidden" />
 		<div
 			className="pointer-events-none absolute left-1/2 top-1/2
 				h-[32rem] w-[32rem] -translate-x-1/2 -translate-y-1/2
