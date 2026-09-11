@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import useLeaseRefresh from "./queries/use-lease-refresh.js"
 import leaveStudio from "./queries/leave-studio.js"
+import useBroadcastRTC from "../hooks/useBroadcastRTC.js";
 
 import Dialog,{type DialogOptions} from "../common/dialog.jsx"
 import MediaList from "./mediaList.js";
@@ -14,9 +15,17 @@ interface BroadcastPageProps {
 export default function BroadcastPage ({
 	onLeave
 }: BroadcastPageProps) {
-	const [ nowPlaying, setNowPlaying ] = useState("");
-	const [ onAir, setOnAir ] = useState(false);
 	const [ dialog, setDialog ] = useState<DialogOptions | null>(null);
+	const [ micTrack, setMicTrack ] = useState<MediaStreamTrack | null>(null);
+	const [ track, setTrack ] = useState<MediaStreamTrack | null>(null);
+	const {
+		status,
+		error,
+		broadcasting,
+		connecting,
+		start,
+		stop
+	 } = useBroadcastRTC(track);
 
 	const refreshQ = useLeaseRefresh();
 	const leaveStudioMutation = useMutation({
@@ -33,8 +42,36 @@ export default function BroadcastPage ({
 		}
 	})
 
+	async function toggleBroadcast () {
+		switch (status) {
+			case "broadcasting":
+			case "reconnecting":
+				stop();
+				break;
+			case "error":
+			case "idle":
+				const stream = await navigator.mediaDevices.getUserMedia({
+					audio: true
+				})
+
+				setMicTrack(stream.getAudioTracks()[0] ?? null)
+				setTrack(stream.getAudioTracks()[0] ?? null);
+
+				start();
+				break;
+		}
+	}
+
 	function closeDialog() {
 		setDialog(null);
+	}
+
+	function onFileTrack (track: MediaStreamTrack | null) {
+		if (track === null) {
+			setTrack(micTrack);
+		} else {
+			setTrack(track);
+		}
 	}
 
 	return (
@@ -71,7 +108,7 @@ export default function BroadcastPage ({
 						lg:grid-cols-[minmax(0,1fr)_22rem]
 					"
 				>
-					<MediaList title="" />
+					<MediaList title="Jingles and music" onTrack={ onFileTrack } />
 
 					<form
 						className="
@@ -107,8 +144,9 @@ export default function BroadcastPage ({
 									focus:ring-4
 									focus:ring-rose-200
 								"
+								onClick={ toggleBroadcast }
 							>
-								{ onAir ? "On air" : "Capture microphone" }
+								{ broadcasting ? "On air" : "Capture microphone" }
 							</button>
 						</div>
 					</form>

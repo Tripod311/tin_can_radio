@@ -4,10 +4,42 @@ import MediaFile from "./mediaFile.js"
 
 interface MediaListProps {
     title: string;
+    onTrack: (track: MediaStreamTrack | null) => void;
 }
 
-export default function MediaList({ title }: MediaListProps) {
+export default function MediaList({ title, onTrack }: MediaListProps) {
     const [ mediaFiles, setMediaFiles ] = useState<File[]>([]);
+    const [ nowPlaying, setNowPlaying ] = useState<string>("");
+
+    function play (key: string, track: MediaStreamTrack) {
+        setNowPlaying(key);
+        onTrack(track);
+    }
+
+    function stop (key: string) {
+        if (nowPlaying === key) {
+            setNowPlaying("");
+            onTrack(null);
+        }
+    }
+
+    function onEnded (key: string) {
+        stop(key)
+    }
+
+    function renderFiles () {
+        return mediaFiles.map((file, index) => {
+            const key = `${file.name}-${file.lastModified}-${index}`;
+
+            return <MediaFile
+                key={key}
+                file={file}
+                play={(track) => { play(key, track) }}
+                stop={() => { stop(key) }}
+                onEnded={() => { onEnded(key) }}
+            />
+        })
+    }
 
     return <section
         className="
@@ -85,15 +117,7 @@ export default function MediaList({ title }: MediaListProps) {
                     pr-1
                 "
             >
-                {mediaFiles.map((file, index) => (
-                    <MediaFile
-                        key={`${file.name}-${file.lastModified}-${index}`}
-                        name={file.name}
-                        play={() => {}}
-                        stop={() => {}}
-                        onEnded={() => {}}
-                    />
-                ))}
+                { renderFiles() }
             </ul>
         )}
     </section>
