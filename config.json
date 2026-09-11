@@ -1,7 +1,7 @@
 {
     "port": 8080,
     "tls": null,
-    "broadcastPassword": "my-tin-pwd",
+    "broadcastPassword": "tinpwd",
     "iceServers": [],
 
     "description": {

@@ -5,14 +5,7 @@ import enterStudio from "./queries/enter-studio.js"
 
 import StationInfo from "./stationInfo.jsx"
 import RadioButton from "./radioButton.jsx"
-import ErrorDialog from "../common/errorDialog.js"
-import Spinner from "../common/spinner.js"
-import PasswordDialog from "../common/passwordDialog.js"
-
-interface DialogOptions {
-	type: "spinner" | "error" | "password";
-	options: Record<string, any>;
-}
+import Dialog,{type DialogOptions} from "../common/dialog.jsx"
 
 interface ListenPageProps {
 	onEnter: () => void;
@@ -29,7 +22,7 @@ export default function ListenPage ({ onEnter }: ListenPageProps) {
 		connecting,
 		start,
 		stop
-	} = useRTC(true);
+	} = useRTC();
 
 	const [ dialog, setDialog ] = useState<DialogOptions | null>(null);
 
@@ -44,27 +37,24 @@ export default function ListenPage ({ onEnter }: ListenPageProps) {
 	const enterStudioMutation = useMutation({
 		mutationFn: enterStudio,
 		onSuccess: () => { onEnter() },
-		onError: (error) => { setDialog({ type: "error", options: { message: error.message } }) }
+		onError: (error) => {
+			setDialog({
+				type: "error",
+				options: {
+					message: error.message,
+					onClose: closeDialog
+				}
+			})
+		}
 	});
 
-	function renderDialog () {
-		if (dialog === null) return null;
+	function passwordSubmit(password: string) {
+		enterStudioMutation.mutate(password);
+		setDialog({ type: "spinner", options: {} });
+	}
 
-		if (dialog.type === "spinner") return <Spinner />
-		
-		if (dialog.type === "error") return <ErrorDialog
-			message={dialog.options.message}
-			onClose={() => { setDialog(null) }}
-		/>
-
-		if (dialog.type === "password") return <PasswordDialog
-			onSubmit={(password: string) => {
-				enterStudioMutation.mutate(password);
-
-				setDialog({ type: "spinner", options: {} });
-			}}
-			onCancel={() => { setDialog(null) }}
-		/>
+	function closeDialog() {
+		setDialog(null);
 	}
 
 	useEffect(() => {
@@ -99,7 +89,15 @@ export default function ListenPage ({ onEnter }: ListenPageProps) {
 					backdrop-blur transition
 					hover:border-stone-400 hover:bg-white hover:text-stone-900
 					focus:outline-none focus:ring-2 focus:ring-stone-400"
-				onClick={() => { setDialog({ type: "password", options: {} }) }}
+				onClick={() => {
+					setDialog({
+						type: "password",
+						options: {
+							onSubmit: passwordSubmit,
+							onCancel: closeDialog
+						}
+					})
+				}}
 			>
 				Enter studio
 			</button>
@@ -127,8 +125,6 @@ export default function ListenPage ({ onEnter }: ListenPageProps) {
 				Powered by Tin Can
 			</a>
 		</footer>
-		{
-			renderDialog()
-		}
+		<Dialog data={dialog} />
 	</div>
 }

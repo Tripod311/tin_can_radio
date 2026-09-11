@@ -1,5 +1,6 @@
 import { useState } from "react"
 import ListenPage from "./listenPage/listenPage.jsx"
+import BroadcastPage from "./broadcastPage/broadcastPage.js";
 
 export default function App () {
 	const [ page, setPage ] = useState<"listen" | "studio">("listen");
@@ -13,8 +14,8 @@ export default function App () {
 	}
 	
 	if (page === "listen") {
-		return <ListenPage onEnter={ enterListen } />
+		return <ListenPage onEnter={ enterStudio } />
 	} else {
-		return null;
+		return <BroadcastPage onLeave={ enterListen } />
 	}
 }

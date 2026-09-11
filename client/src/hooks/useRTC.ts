@@ -31,7 +31,7 @@ function waitForIceGatheringComplete (peerConnection: RTCPeerConnection) {
 	});
 }
 
-export default function useRTC (recvOnly: boolean, iceServers = []) {
+export default function useRTC (iceServers = []) {
 	const peerConnectionRef = useRef<RTCPeerConnection>(null);
 	const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -66,11 +66,9 @@ export default function useRTC (recvOnly: boolean, iceServers = []) {
 
 		peerConnectionRef.current = peerConnection;
 
-		if (recvOnly) {
-			peerConnection.addTransceiver("audio", {
-				direction: "recvonly"
-			});
-		}
+		peerConnection.addTransceiver("audio", {
+			direction: "recvonly"
+		});
 
 		peerConnection.addEventListener(
 			"connectionstatechange",

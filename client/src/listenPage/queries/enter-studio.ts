@@ -1,10 +1,10 @@
 export default async function enterStudio(password: string): Promise<void> {
-	const response = await fetch("/api/studio", {
+	const response = await fetch("/api/enterStudio", {
 		method: "POST",
 		headers: {
-			"Content-Type": "application/json",
+			"Content-Type": "text/plain",
 		},
-		body: JSON.stringify({ password }),
+		body: password,
 	})
 
 	if (!response.ok) {

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/pion/webrtc/v4"
 )
@@ -40,6 +43,7 @@ func NewAPI(title string, description string, password string) *API {
 }
 
 func (api *API) Register(mux *http.ServeMux) {
+	mux.HandleFunc("/api/logo", api.HandleLogo)
 	mux.HandleFunc("/api/description", api.HandleDescription)
 	mux.HandleFunc("/api/status", api.HandleStatus)
 	mux.HandleFunc("/api/listen", api.HandleListen)
@@ -282,4 +286,49 @@ func (api *API) HandleBroadcast(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(answer); err != nil {
 		return
 	}
+}
+
+func (api *API) HandleLogo(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	executablePath, err := os.Executable()
+	if err != nil {
+		http.Error(w, "failed to locate executable", http.StatusInternalServerError)
+		return
+	}
+
+	executableDir := filepath.Dir(executablePath)
+
+	entries, err := os.ReadDir(executableDir)
+	if err != nil {
+		http.Error(w, "failed to read executable directory", http.StatusInternalServerError)
+		return
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+
+		if name != "logo" && !strings.HasPrefix(name, "logo.") {
+			continue
+		}
+
+		info, err := entry.Info()
+		if err != nil || !info.Mode().IsRegular() {
+			continue
+		}
+
+		http.ServeFile(
+			w,
+			r,
+			filepath.Join(executableDir, name),
+		)
+
+		return
+	}
+
+	http.NotFound(w, r)
 }
