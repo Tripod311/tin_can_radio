@@ -12,7 +12,11 @@ async function fetchStationDescription ({ signal }): Promise<StationDescription>
 		throw new Error(`Failed to fetch station description: ${response.status}`);
 	}
 
-	return response.json();
+	const result = await response.json();
+
+	document.title = result.title;
+
+	return result;
 }
 
 export default function useStationDescription () {

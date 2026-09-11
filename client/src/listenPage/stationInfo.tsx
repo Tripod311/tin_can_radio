@@ -28,7 +28,9 @@ export default function StationInfo () {
 
 		let result = "";
 		for (let i = 0; i < Math.min(words.length, 3); i++) {
-			result += words[i][0].toUpperCase();
+			if (!!words[i]![0]) {
+				result += words[i]![0]?.toUpperCase();
+			}
 		}
 
 		return result;
