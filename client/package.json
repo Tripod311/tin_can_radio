@@ -1,0 +1,29 @@
+{
+  "name": "tin_can",
+  "version": "1.0.0",
+  "description": "Client for tin can radio",
+  "license": "ISC",
+  "author": "Tripod ind.tripod@gmail.com",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.102.8",
+    "music-metadata": "^11.15.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

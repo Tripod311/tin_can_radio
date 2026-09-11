@@ -1,0 +1,11 @@
+{
+    "port": 8080,
+    "tls": null,
+    "broadcastPassword": "my-tin-pwd",
+    "iceServers": [],
+
+    "description": {
+        "title": "Tin Can Test",
+        "description": "Example Tin Can radio station"
+    }
+}
