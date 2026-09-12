@@ -5,7 +5,7 @@ interface StationDescription {
 	description: string;
 }
 
-async function fetchStationDescription ({ signal }): Promise<StationDescription> {
+async function fetchStationDescription ({ signal }: { signal: AbortSignal }): Promise<StationDescription> {
 	const response = await fetch("/api/description", { signal });
 
 	if (!response.ok) {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"mime"
 	"net/http"
 	"path"
 	"time"
@@ -69,6 +70,13 @@ func NewServer(clientDir string, config Config) *Server {
 }
 
 func (server *Server) Start() error {
+	if err := mime.AddExtensionType(
+		".webmanifest",
+		"application/manifest+json",
+	); err != nil {
+		return err
+	}
+
 	server.instance = &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%d", server.Config.Port),
 		Handler: server.Mux,

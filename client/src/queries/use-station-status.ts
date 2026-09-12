@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query"
 
 interface StationStatus {
 	broadcasting: boolean;
-	nowPlaying?: string;
+	listeners: number;
 }
 
-async function fetchStationStatus ({ signal }): Promise<StationStatus> {
+async function fetchStationStatus ({ signal }: { signal: AbortSignal }): Promise<StationStatus> {
 	const response = await fetch("/api/status", { signal });
 
 	if (!response.ok) {

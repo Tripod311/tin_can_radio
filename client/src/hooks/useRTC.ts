@@ -31,7 +31,7 @@ function waitForIceGatheringComplete (peerConnection: RTCPeerConnection) {
 	});
 }
 
-export default function useRTC (iceServers = []) {
+export default function useRTC (iceServers: RTCIceServer[] = []) {
 	const peerConnectionRef = useRef<RTCPeerConnection>(null);
 	const audioRef = useRef<HTMLAudioElement>(null);
 

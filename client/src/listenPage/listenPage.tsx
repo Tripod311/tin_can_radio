@@ -1,7 +1,7 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import useRTC from "../hooks/useRTC.js"
-import enterStudio from "./queries/enter-studio.js"
+import enterStudio from "../queries/enter-studio.js"
 
 import StationInfo from "./stationInfo.jsx"
 import RadioButton from "./radioButton.jsx"

@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 
-import useStationDescription from "./queries/use-station-description.js"
-import useStationStatus from "./queries/use-station-status.js"
+import useStationDescription from "../queries/use-station-description.js"
+import useStationStatus from "../queries/use-station-status.js"
 
 export default function StationInfo () {
 	const { data } = useStationDescription();
@@ -106,27 +106,35 @@ export default function StationInfo () {
 		}
 
 		<div
-			className="mt-6 flex items-center gap-2 text-sm font-medium
-				text-stone-500"
+			className="
+				mt-6 flex items-center gap-2
+				text-sm font-medium text-stone-500
+			"
 			role="status"
 			aria-live="polite"
 		>
-			{ renderStationStatus() }
+			{renderStationStatus()}
+
+			{!statusPending &&
+				!statusError &&
+				stationStatus?.listeners !== undefined &&
+				<>
+					<span
+						className="mx-1 text-stone-300"
+						aria-hidden="true"
+					>
+						·
+					</span>
+
+					<span>
+						{stationStatus.listeners}
+						{" "}
+						{stationStatus.listeners === 1
+							? "listener"
+							: "listeners"}
+					</span>
+				</>
+			}
 		</div>
-
-		{ stationStatus?.broadcasting && stationStatus.nowPlaying &&
-			<div className="mt-4 max-w-md">
-				<div
-					className="text-xs font-medium uppercase tracking-widest
-						text-stone-400"
-				>
-					Now playing
-				</div>
-
-				<div className="mt-1 text-base font-medium text-stone-700">
-					{ stationStatus.nowPlaying }
-				</div>
-			</div>
-		}
 	</React.Fragment>
 }

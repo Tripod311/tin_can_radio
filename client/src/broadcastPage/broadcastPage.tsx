@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 
-import useLeaseRefresh from "./queries/use-lease-refresh.js"
-import leaveStudio from "./queries/leave-studio.js"
+import useLeaseRefresh from "../queries/use-lease-refresh.js"
+import useStationStatus from "../queries/use-station-status.js";
+import leaveStudio from "../queries/leave-studio.js"
 import useBroadcastRTC from "../hooks/useBroadcastRTC.js";
 
 import Dialog,{type DialogOptions} from "../common/dialog.jsx"
@@ -20,6 +21,11 @@ export default function BroadcastPage ({
 	const [ dialog, setDialog ] = useState<DialogOptions | null>(null);
 	const [ micTrack, setMicTrack ] = useState<MediaStreamTrack | null>(null);
 	const [ track, setTrack ] = useState<MediaStreamTrack | null>(null);
+	const {
+		data: stationStatus,
+		isPending: stationStatusPending,
+		isError: stationStatusError
+	} = useStationStatus();
 	const {
 		status,
 		error,
@@ -150,6 +156,37 @@ export default function BroadcastPage ({
 						</h2>
 
 						<div className="mt-auto">
+							<div
+								className="
+									mb-4 flex items-center justify-between
+									rounded-xl
+									border border-stone-200
+									bg-white/70
+									px-4 py-3
+								"
+							>
+								<div className="flex items-center gap-2">
+									<span
+										className={`
+											h-2 w-2 rounded-full
+											${broadcasting
+												? "animate-pulse bg-orange-500"
+												: "bg-stone-300"}
+										`}
+									></span>
+
+									<span className="text-sm font-medium text-stone-600">
+										Active listeners
+									</span>
+								</div>
+
+								<span className="text-lg font-semibold text-stone-900">
+									{stationStatusPending || stationStatusError
+										? "—"
+										: stationStatus?.listeners ?? 0}
+								</span>
+							</div>
+
 							<button
 								type="button"
 								className="
@@ -165,9 +202,11 @@ export default function BroadcastPage ({
 									focus:ring-4
 									focus:ring-rose-200
 								"
-								onClick={ toggleBroadcast }
+								onClick={toggleBroadcast}
 							>
-								{ broadcasting ? "On air" : "Capture microphone" }
+								{broadcasting
+									? "On air"
+									: "Capture microphone"}
 							</button>
 						</div>
 					</form>
