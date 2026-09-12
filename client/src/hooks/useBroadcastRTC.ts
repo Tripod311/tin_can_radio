@@ -5,8 +5,6 @@ import {
 	useState
 } from "react"
 
-const DEFAULT_ICE_SERVERS: RTCIceServer[] = []
-
 type BroadcastStatus =
 	| "idle"
 	| "connecting"
@@ -43,7 +41,7 @@ function waitForIceGatheringComplete (
 }
 
 export default function useBroadcastRTC (
-	iceServers: RTCIceServer[] = DEFAULT_ICE_SERVERS
+	iceServers: RTCIceServer[] = []
 ) {
 	const senderRef = useRef<RTCRtpSender | null>(null);
 	const peerConnectionRef = useRef<RTCPeerConnection>(null)

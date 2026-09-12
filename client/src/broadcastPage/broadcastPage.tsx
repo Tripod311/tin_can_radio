@@ -10,10 +10,12 @@ import MediaList from "./mediaList.js";
 
 interface BroadcastPageProps {
 	onLeave: () => void;
+	iceServers: RTCIceServer[];
 }
 
 export default function BroadcastPage ({
-	onLeave
+	onLeave,
+	iceServers
 }: BroadcastPageProps) {
 	const [ dialog, setDialog ] = useState<DialogOptions | null>(null);
 	const [ micTrack, setMicTrack ] = useState<MediaStreamTrack | null>(null);
@@ -26,7 +28,7 @@ export default function BroadcastPage ({
 		start,
 		stop,
 		replaceTrack
-	 } = useBroadcastRTC();
+	 } = useBroadcastRTC(iceServers);
 
 	const refreshQ = useLeaseRefresh();
 	const leaveStudioMutation = useMutation({

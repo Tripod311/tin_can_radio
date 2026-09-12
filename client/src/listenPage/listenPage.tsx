@@ -8,10 +8,11 @@ import RadioButton from "./radioButton.jsx"
 import Dialog,{type DialogOptions} from "../common/dialog.jsx"
 
 interface ListenPageProps {
+	iceServers: RTCIceServer[];
 	onEnter: () => void;
 }
 
-export default function ListenPage ({ onEnter }: ListenPageProps) {
+export default function ListenPage ({ onEnter, iceServers }: ListenPageProps) {
 	const queryClient = useQueryClient();
 	const reconnectingRef = useRef(false);
 	const {
@@ -22,7 +23,7 @@ export default function ListenPage ({ onEnter }: ListenPageProps) {
 		connecting,
 		start,
 		stop
-	} = useRTC();
+	} = useRTC(iceServers);
 
 	const [ dialog, setDialog ] = useState<DialogOptions | null>(null);
 
@@ -120,7 +121,7 @@ export default function ListenPage ({ onEnter }: ListenPageProps) {
 
 		<footer className="relative px-6 py-5 text-center">
 			<a
-				href="#"
+				href="https://github.com/Tripod311/tin_can_radio"
 				className="text-xs text-stone-400 transition hover:text-stone-600"
 			>
 				Powered by Tin Can

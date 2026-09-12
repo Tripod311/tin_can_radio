@@ -1,9 +1,17 @@
 import { useState } from "react"
 import ListenPage from "./listenPage/listenPage.jsx"
-import BroadcastPage from "./broadcastPage/broadcastPage.js";
+import BroadcastPage from "./broadcastPage/broadcastPage.jsx";
+import Spinner from "./common/spinner.jsx"
+import useIce from "./hooks/useIce.js"
 
 export default function App () {
 	const [ page, setPage ] = useState<"listen" | "studio">("listen");
+	const {
+		data: iceServers,
+		isPending,
+		isError,
+		error
+	} = useIce();
 
 	function enterListen() {
 		setPage("listen");
@@ -13,9 +21,13 @@ export default function App () {
 		setPage("studio");
 	}
 	
-	if (page === "listen") {
-		return <ListenPage onEnter={ enterStudio } />
+	if (isPending) {
+		return <Spinner />
 	} else {
-		return <BroadcastPage onLeave={ enterListen } />
+		if (page === "listen") {
+			return <ListenPage onEnter={ enterStudio } iceServers={ iceServers } />
+		} else {
+			return <BroadcastPage onLeave={ enterListen } iceServers={ iceServers } />
+		}
 	}
 }
