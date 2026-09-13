@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import useRTC from "../hooks/useRTC.js"
 import enterStudio from "../queries/enter-studio.js"
 
+import PushNotifications from "./pushNotifications.js"
 import StationInfo from "./stationInfo.jsx"
 import RadioButton from "./radioButton.jsx"
 import Dialog,{type DialogOptions} from "../common/dialog.jsx"
@@ -83,7 +84,8 @@ export default function ListenPage ({ onEnter, iceServers }: ListenPageProps) {
 				rounded-full bg-amber-200/30 blur-3xl"
 		></div>
 
-		<header className="relative flex justify-end p-5 sm:p-8">
+		<header className="relative flex justify-between p-5 sm:p-8">
+			<PushNotifications />
 			<button
 				type="button"
 				className="rounded-full border border-stone-300 bg-white/60

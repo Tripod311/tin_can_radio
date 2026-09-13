@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -27,7 +26,7 @@ type Radio struct {
 	broadcaster *webrtc.PeerConnection
 	started     bool
 
-	meta json.RawMessage
+	broadcastStatusHandle func(status bool)
 }
 
 func NewRadio(servers []ICEServer) (*Radio, error) {
@@ -279,9 +278,14 @@ func (radio *Radio) ReceiveBroadcastOffer(
 			case webrtc.PeerConnectionStateFailed:
 				radio.removeBroadcaster(peerConnection)
 				_ = peerConnection.Close()
-
+				if radio.broadcastStatusHandle != nil {
+					radio.broadcastStatusHandle(false)
+				}
 			case webrtc.PeerConnectionStateClosed:
 				radio.removeBroadcaster(peerConnection)
+				if radio.broadcastStatusHandle != nil {
+					radio.broadcastStatusHandle(false)
+				}
 			}
 		},
 	)
@@ -368,6 +372,9 @@ func (radio *Radio) ReceiveBroadcastOffer(
 	}
 
 	fmt.Println("Broadcast started")
+	if radio.broadcastStatusHandle != nil {
+		radio.broadcastStatusHandle(true)
+	}
 
 	return localDescription, nil
 }
@@ -380,7 +387,6 @@ func (radio *Radio) removeBroadcaster(
 
 	if radio.broadcaster == peerConnection {
 		radio.broadcaster = nil
-		radio.meta = nil
 
 		fmt.Println("Broadcast stopped")
 	}
@@ -391,4 +397,8 @@ func (radio *Radio) GetStatus() (bool, int) {
 	defer radio.mutex.RUnlock()
 
 	return radio.broadcaster != nil, len(radio.listeners)
+}
+
+func (radio *Radio) SetBroadcastHandle(handle func(bool)) {
+	radio.broadcastStatusHandle = handle
 }

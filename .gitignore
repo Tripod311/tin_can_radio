@@ -1,4 +1,6 @@
 client/node_modules
 .vscode
 client_dist
-tin_can
+tin_can*
+vapid.json
+data.sqlite

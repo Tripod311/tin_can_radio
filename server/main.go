@@ -40,13 +40,18 @@ func main() {
 	flag.Parse()
 
 	serverInst := NewServer(*clientPath, config)
-	apiInst := api.NewAPI(serverInst.Config.Description.Title, serverInst.Config.Description.Description, serverInst.Config.BroadcastPassword)
-	apiInst.Register(serverInst.Mux)
+	apiInst, err := api.NewAPI(serverInst.Config.Description.Title, serverInst.Config.Description.Description, serverInst.Config.BroadcastPassword)
+	if err != nil {
+		log.Fatalf("api setup error: %s\n", err)
+	}
+
 	radioInst, err := NewRadio(config.ICEServers)
 	if err != nil {
 		log.Fatalf("failed to start radio: %s", err)
 	}
 	apiInst.Radio = radioInst
+
+	apiInst.Register(serverInst.Mux)
 	radioInst.Start()
 
 	errChan := make(chan error, 1)
