@@ -158,6 +158,7 @@ func (session *Session) listen() {
 				}
 			}
 		case <-timerChannel:
+			fmt.Println("Studio lease expired")
 			clear()
 		case <-session.shutdown:
 			return

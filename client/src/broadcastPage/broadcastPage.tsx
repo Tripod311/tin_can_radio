@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 
 import useLeaseRefresh from "../queries/use-lease-refresh.js"
 import useStationStatus from "../queries/use-station-status.js";
 import leaveStudio from "../queries/leave-studio.js"
 import useBroadcastRTC from "../hooks/useBroadcastRTC.js";
+import useRecorder from "../hooks/useRecorder.js";
+import useAudioDestination from "../hooks/useAudioDestination.js";
 
 import Dialog,{type DialogOptions} from "../common/dialog.jsx"
 import MediaList from "./mediaList.js";
@@ -21,11 +23,13 @@ export default function BroadcastPage ({
 	const [ dialog, setDialog ] = useState<DialogOptions | null>(null);
 	const [ micTrack, setMicTrack ] = useState<MediaStreamTrack | null>(null);
 	const [ track, setTrack ] = useState<MediaStreamTrack | null>(null);
+	
 	const {
 		data: stationStatus,
 		isPending: stationStatusPending,
 		isError: stationStatusError
 	} = useStationStatus();
+
 	const {
 		status,
 		error,
@@ -34,7 +38,21 @@ export default function BroadcastPage ({
 		start,
 		stop,
 		replaceTrack
-	 } = useBroadcastRTC(iceServers);
+	} = useBroadcastRTC(iceServers);
+
+	const {
+		destinationRef,
+		setSource,
+		clearSource
+	} = useAudioDestination();
+
+	const {
+		recording,
+		error: recorderError,
+		start: recorderStart,
+		stop: recorderStop,
+		getExtension
+	} = useRecorder();
 
 	const refreshQ = useLeaseRefresh();
 	const leaveStudioMutation = useMutation({
@@ -64,6 +82,10 @@ export default function BroadcastPage ({
 			} else {
 				start(track);
 			}
+
+			if (recording) {
+				setSource(track);
+			}
 		} else {
 			stop();
 		}
@@ -86,6 +108,43 @@ export default function BroadcastPage ({
 				setMicTrack(micTrack);
 				setTrack(micTrack);
 				break;
+		}
+	}
+
+	async function toggleRecorder () {
+		if (recording) {
+			const blob = await recorderStop();
+
+			const ext = getExtension();
+
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+
+			link.href = url;
+			link.style.display = "none";
+			link.download = `tin_can_${(new Date()).toISOString()}.${ext}`;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+
+			setTimeout(() => {
+				URL.revokeObjectURL(url);
+			}, 0);
+		} else {
+			try {
+				if (track === null) throw new Error("Must capture mic first");
+
+				setSource(track);
+				recorderStart(destinationRef.current!.stream);
+			} catch (err: any) {
+				setDialog({
+					type: "error",
+					options: {
+						message: err.message,
+						onClose: closeDialog
+					}
+				})
+			}
 		}
 	}
 
@@ -155,7 +214,7 @@ export default function BroadcastPage ({
 							Broadcast
 						</h2>
 
-						<div className="mt-auto">
+						<div className="mt-auto flex flex-col gap-4">
 							<div
 								className="
 									mb-4 flex items-center justify-between
@@ -186,6 +245,28 @@ export default function BroadcastPage ({
 										: stationStatus?.listeners ?? 0}
 								</span>
 							</div>
+
+							<button
+								type="button"
+								className="
+									w-full
+									rounded-xl
+									bg-rose-800
+									px-5 py-3
+									text-sm font-semibold text-white
+									shadow-sm
+									transition
+									hover:bg-rose-700
+									focus:outline-none
+									focus:ring-4
+									focus:ring-rose-200
+								"
+								onClick={toggleRecorder}
+							>
+								{recording
+									? "Recording"
+									: "Record stream"}
+							</button>
 
 							<button
 								type="button"
